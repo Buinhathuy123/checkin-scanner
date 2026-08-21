@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1"
+>
+
+<title>Check-in Scanner</title>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+
+  margin: 0;
+
+  padding: 20px;
+
+  font-family: Arial, sans-serif;
+
+  background: #f5f5f5;
+
+  text-align: center;
+
+}
+
+.container {
+
+  max-width: 500px;
+
+  margin: auto;
+
+  background: white;
+
+  padding: 25px;
+
+  border-radius: 20px;
+
+  box-shadow:
+    0 5px 25px
+    rgba(0,0,0,0.1);
+
+}
+
+h1 {
+
+  margin-top: 0;
+
+}
+
+#reader {
+
+  width: 100%;
+
+  margin-top: 20px;
+
+}
+
+button {
+
+  padding: 14px 25px;
+
+  border: none;
+
+  border-radius: 10px;
+
+  background: #FFD700;
+
+  font-size: 16px;
+
+  font-weight: bold;
+
+  cursor: pointer;
+
+}
+
+button:disabled {
+
+  opacity: 0.5;
+
+}
+
+#status {
+
+  margin-top: 20px;
+
+  font-size: 17px;
+
+  font-weight: bold;
+
+}
+
+.success {
+
+  color: green;
+
+}
+
+.error {
+
+  color: red;
+
+}
+
+.info {
+
+  color: #555;
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+<h1>
+Check-in Scanner
+</h1>
+
+
+<p>
+Scan the customer's QR code
+</p>
+
+
+<button
+  id="startButton"
+  onclick="startScanner()">
+
+Start Camera
+
+</button>
+
+
+<div id="reader"></div>
+
+
+<div
+  id="status"
+  class="info">
+
+Camera not started.
+
+</div>
+
+
+</div>
+
+
+<script>
+
+
+// ============================================================
+// CONFIGURATION
+// ============================================================
+
+// IMPORTANT:
+// Replace this with your Apps Script Web App URL.
+
+const API_URL =
+  "https://script.google.com/macros/s/AKfycbx1LEKvLneIrVQxkM15O8nicV9LxDow8QB0a2ZHad1Nz2nfYyraEOKzqluzKTDlRJoAFQ/exec";
+
+
+let scanner = null;
+
+let scanning = false;
+
+let processing = false;
+
+
+// ============================================================
+// START SCANNER
+// ============================================================
+
+function startScanner() {
+
+  if (scanning) {
+
+    return;
+
+  }
+
+
+  const status =
+    document.getElementById("status");
+
+
+  const button =
+    document.getElementById("startButton");
+
+
+  status.innerText =
+    "Requesting camera permission...";
+
+
+  button.disabled = true;
+
+
+  scanner =
+    new Html5Qrcode("reader");
+
+
+  scanner
+    .start(
+
+      {
+        facingMode: "environment"
+      },
+
+      {
+        fps: 10,
+
+        qrbox: {
+          width: 250,
+          height: 250
+        }
+
+      },
+
+      onScanSuccess,
+
+      onScanFailure
+
+    )
+
+    .then(function() {
+
+      scanning = true;
+
+      status.innerText =
+        "Camera ready. Scan QR code.";
+
+      status.className =
+        "info";
+
+    })
+
+    .catch(function(error) {
+
+      console.error(error);
+
+      button.disabled = false;
+
+      status.innerText =
+        "Unable to access camera. Please allow camera permission.";
+
+      status.className =
+        "error";
+
+    });
+
+}
+
+
+// ============================================================
+// SCAN SUCCESS
+// ============================================================
+
+function onScanSuccess(
+  decodedText,
+  decodedResult
+) {
+
+  if (processing) {
+
+    return;
+
+  }
+
+
+  processing = true;
+
+
+  console.log(
+    "QR CONTENT:",
+    decodedText
+  );
+
+
+  const qrId =
+    extractQrId(decodedText);
+
+
+  if (!qrId) {
+
+    showError(
+      "Invalid QR code."
+    );
+
+    processing = false;
+
+    return;
+
+  }
+
+
+  showInfo(
+    "Checking in..."
+  );
+
+
+  checkIn(qrId);
+
+}
+
+
+// ============================================================
+// EXTRACT QR ID
+// ============================================================
+
+function extractQrId(
+  qrContent
+) {
+
+  try {
+
+    const url =
+      new URL(qrContent);
+
+
+    const id =
+      url.searchParams.get("id");
+
+
+    if (id) {
+
+      return id;
+
+    }
+
+  }
+
+  catch (error) {
+
+    console.log(
+      "QR is not a URL."
+    );
+
+  }
+
+
+  // Fallback:
+  // If QR itself contains the ID
+
+  if (
+    qrContent &&
+    qrContent.length > 0
+  ) {
+
+    return qrContent.trim();
+
+  }
+
+
+  return null;
+
+}
+
+
+// ============================================================
+// SEND TO APPS SCRIPT
+// ============================================================
+
+function checkIn(qrId) {
+
+  const callbackName =
+    "checkInCallback_" +
+    Date.now();
+
+
+  window[callbackName] =
+    function(result) {
+
+      try {
+
+        handleCheckInResult(
+          result
+        );
+
+      }
+
+      finally {
+
+        delete window[
+          callbackName
+        ];
+
+      }
+
+    };
+
+
+  const script =
+    document.createElement(
+      "script"
+    );
+
+
+  script.src =
+    API_URL +
+    "?action=checkIn" +
+    "&id=" +
+    encodeURIComponent(qrId) +
+    "&callback=" +
+    callbackName;
+
+
+  script.onerror =
+    function() {
+
+      showError(
+        "Unable to connect to check-in server."
+      );
+
+      processing = false;
+
+    };
+
+
+  document.body.appendChild(
+    script
+  );
+
+}
+
+
+// ============================================================
+// RESULT
+// ============================================================
+
+function handleCheckInResult(
+  result
+) {
+
+  if (
+    result &&
+    result.success
+  ) {
+
+    showSuccess(
+
+      "✓ Check-in successful<br>" +
+
+      "<br>Name: " +
+      escapeHtml(
+        result.name
+      ) +
+
+      "<br>Scan Count: " +
+      result.scanCount
+
+    );
+
+
+  }
+
+  else {
+
+    showError(
+
+      result &&
+      result.message
+        ? result.message
+        : "Check-in failed."
+
+    );
+
+  }
+
+
+  // Allow next scan
+  setTimeout(
+    function() {
+
+      processing = false;
+
+      showInfo(
+        "Ready for next QR code."
+      );
+
+    },
+    3000
+  );
+
+}
+
+
+// ============================================================
+// SCAN FAILURE
+// ============================================================
+
+function onScanFailure(
+  error
+) {
+
+  // Ignore normal scan failures.
+
+}
+
+
+// ============================================================
+// UI
+// ============================================================
+
+function showSuccess(
+  message
+) {
+
+  const status =
+    document.getElementById(
+      "status"
+    );
+
+
+  status.innerHTML =
+    message;
+
+
+  status.className =
+    "success";
+
+}
+
+
+function showError(
+  message
+) {
+
+  const status =
+    document.getElementById(
+      "status"
+    );
+
+
+  status.innerHTML =
+    message;
+
+
+  status.className =
+    "error";
+
+}
+
+
+function showInfo(
+  message
+) {
+
+  const status =
+    document.getElementById(
+      "status"
+    );
+
+
+  status.innerHTML =
+    message;
+
+
+  status.className =
+    "info";
+
+}
+
+
+// ============================================================
+// ESCAPE HTML
+// ============================================================
+
+function escapeHtml(
+  value
+) {
+
+  return String(
+    value || ""
+  )
+
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+
+    .replace(
+      /</g,
+      "&lt;"
+    )
+
+    .replace(
+      />/g,
+      "&gt;"
+    )
+
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+
+}
+
+</script>
+
+
+</body>
+
+</html>
