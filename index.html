@@ -140,7 +140,6 @@ button:disabled {
 
 }
 
-
 </style>
 
 </head>
@@ -193,6 +192,7 @@ Camera not started.
 // CONFIGURATION
 // ============================================================
 
+// Apps Script Web App của CHECK-IN SCANNER BACKEND
 const API_URL =
   "https://script.google.com/macros/s/AKfycbx1LEKvLneIrVQxkM15O8nicV9LxDow8QB0a2ZHad1Nz2nfYyraEOKzqluzKTDlRJoAFQ/exec";
 
@@ -241,11 +241,21 @@ function startScanner() {
     true;
 
 
+  // ==========================================================
+  // CREATE QR SCANNER
+  // ==========================================================
+
   scanner =
     new Html5Qrcode(
       "reader"
     );
 
+
+  // ==========================================================
+  // START CAMERA
+  //
+  // Giữ nguyên cách hoạt động của version cũ
+  // ==========================================================
 
   scanner
 
@@ -309,6 +319,9 @@ function startScanner() {
           false;
 
 
+        scanning = false;
+
+
         status.innerText =
           "Unable to access camera. " +
           "Please allow camera permission.";
@@ -333,6 +346,10 @@ function onScanSuccess(
   decodedResult
 ) {
 
+  // ----------------------------------------------------------
+  // Không xử lý nhiều lần cùng lúc
+  // ----------------------------------------------------------
+
   if (processing) {
 
     return;
@@ -348,6 +365,10 @@ function onScanSuccess(
     decodedText
   );
 
+
+  // ----------------------------------------------------------
+  // LẤY QR ID
+  // ----------------------------------------------------------
 
   const qrId =
     extractQrId(
@@ -370,10 +391,20 @@ function onScanSuccess(
   }
 
 
+  console.log(
+    "QR ID:",
+    qrId
+  );
+
+
   showInfo(
     "Checking in..."
   );
 
+
+  // ----------------------------------------------------------
+  // GỌI CHECK-IN API
+  // ----------------------------------------------------------
 
   checkIn(
     qrId
@@ -406,7 +437,7 @@ function extractQrId(
 
 
   // ==========================================================
-  // QR IS URL
+  // QR CHỨA URL
   // ==========================================================
 
   try {
@@ -445,7 +476,7 @@ function extractQrId(
   // ==========================================================
   // FALLBACK
   //
-  // Nếu QR chứa trực tiếp QR ID.
+  // Nếu QR chứa trực tiếp QR ID
   // ==========================================================
 
   if (
@@ -465,17 +496,34 @@ function extractQrId(
 // ============================================================
 // CHECK-IN API
 //
-// Sử dụng JSONP để GitHub Pages gọi Apps Script.
-// Không sử dụng google.script.run.
+// GitHub Pages
+//       ↓
+// JSONP
+//       ↓
+// Google Apps Script
+//       ↓
+// Google Sheet
+//
+// Không sử dụng google.script.run
 // ============================================================
 
 function checkIn(
   qrId
 ) {
 
+  // ==========================================================
+  // UNIQUE CALLBACK NAME
+  // ==========================================================
+
   const callbackName =
     "checkInCallback_" +
     Date.now();
+
+
+  console.log(
+    "Callback:",
+    callbackName
+  );
 
 
   // ==========================================================
@@ -484,6 +532,12 @@ function checkIn(
 
   window[callbackName] =
     function(result) {
+
+      console.log(
+        "CHECK-IN RESPONSE:",
+        result
+      );
+
 
       try {
 
@@ -496,6 +550,7 @@ function checkIn(
       catch (error) {
 
         console.error(
+          "Response handling error:",
           error
         );
 
@@ -512,6 +567,10 @@ function checkIn(
 
       finally {
 
+        // ----------------------------------------------------
+        // XÓA CALLBACK
+        // ----------------------------------------------------
+
         delete window[
           callbackName
         ];
@@ -522,7 +581,7 @@ function checkIn(
 
 
   // ==========================================================
-  // CREATE SCRIPT REQUEST
+  // CREATE SCRIPT
   // ==========================================================
 
   const script =
@@ -530,6 +589,10 @@ function checkIn(
       "script"
     );
 
+
+  // ==========================================================
+  // API URL
+  // ==========================================================
 
   script.src =
     API_URL +
@@ -542,6 +605,12 @@ function checkIn(
     encodeURIComponent(
       callbackName
     );
+
+
+  console.log(
+    "API REQUEST:",
+    script.src
+  );
 
 
   // ==========================================================
@@ -584,13 +653,23 @@ function checkIn(
 
 
   // ==========================================================
-  // CLEAN SCRIPT AFTER LOAD
+  // SCRIPT LOADED
   // ==========================================================
 
   script.onload =
     function() {
 
+      console.log(
+        "Apps Script request loaded."
+      );
+
+
+      // ------------------------------------------------------
+      // Xóa script sau khi callback chạy
+      // ------------------------------------------------------
+
       setTimeout(
+
         function() {
 
           if (
@@ -604,11 +683,17 @@ function checkIn(
           }
 
         },
-        100
+
+        500
+
       );
 
     };
 
+
+  // ==========================================================
+  // SEND REQUEST
+  // ==========================================================
 
   document.body.appendChild(
     script
@@ -654,10 +739,11 @@ function handleCheckInResult(
       "<br>" +
 
       "Scan Count: " +
-      result.scanCount
+      escapeHtml(
+        result.scanCount
+      )
 
     );
-
 
   }
 
@@ -685,7 +771,9 @@ function handleCheckInResult(
       "<br>" +
 
       "Scan Count: " +
-      result.scanCount
+      escapeHtml(
+        result.scanCount
+      )
 
     );
 
@@ -747,13 +835,16 @@ function onScanFailure(
   error
 ) {
 
+  // ----------------------------------------------------------
   // Ignore normal scanning failures.
+  // QR scanner gọi function này liên tục khi chưa thấy QR.
+  // ----------------------------------------------------------
 
 }
 
 
 // ============================================================
-// UI
+// SHOW SUCCESS
 // ============================================================
 
 function showSuccess(
@@ -776,6 +867,10 @@ function showSuccess(
 }
 
 
+// ============================================================
+// SHOW ERROR
+// ============================================================
+
 function showError(
   message
 ) {
@@ -796,6 +891,10 @@ function showError(
 }
 
 
+// ============================================================
+// SHOW WARNING
+// ============================================================
+
 function showWarning(
   message
 ) {
@@ -815,6 +914,10 @@ function showWarning(
 
 }
 
+
+// ============================================================
+// SHOW INFO
+// ============================================================
 
 function showInfo(
   message
