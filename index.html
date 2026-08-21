@@ -14,130 +14,83 @@
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 
-
 <style>
 
 * {
   box-sizing: border-box;
 }
 
-
 body {
-
   margin: 0;
-
   padding: 20px;
-
   font-family: Arial, sans-serif;
-
   background: #f5f5f5;
-
   text-align: center;
-
 }
 
-
 .container {
-
   max-width: 500px;
-
   margin: auto;
-
   background: white;
-
   padding: 25px;
-
   border-radius: 20px;
-
   box-shadow:
     0 5px 25px
     rgba(0,0,0,0.1);
-
 }
-
 
 h1 {
-
   margin-top: 0;
-
 }
-
 
 #reader {
-
   width: 100%;
-
   margin-top: 20px;
-
 }
-
 
 button {
-
   padding: 14px 25px;
-
   border: none;
-
   border-radius: 10px;
-
   background: #FFD700;
-
   font-size: 16px;
-
   font-weight: bold;
-
   cursor: pointer;
-
 }
-
 
 button:disabled {
-
   opacity: 0.5;
-
   cursor: not-allowed;
-
 }
-
 
 #status {
-
   margin-top: 20px;
-
   font-size: 17px;
-
   font-weight: bold;
-
   line-height: 1.5;
-
 }
-
 
 .success {
-
   color: green;
-
 }
-
 
 .error {
-
   color: red;
-
 }
-
 
 .info {
-
   color: #555;
-
 }
 
-
 .warning {
-
   color: #d97706;
+}
 
+.debug {
+  margin-top: 15px;
+  font-size: 12px;
+  color: #777;
+  word-break: break-word;
 }
 
 </style>
@@ -150,11 +103,9 @@ button:disabled {
 
 <div class="container">
 
-
 <h1>
 Check-in Scanner
 </h1>
-
 
 <p>
 Scan the customer's QR code
@@ -182,6 +133,12 @@ Camera not started.
 </div>
 
 
+<div
+  id="debug"
+  class="debug">
+</div>
+
+
 </div>
 
 
@@ -192,7 +149,6 @@ Camera not started.
 // CONFIGURATION
 // ============================================================
 
-// Apps Script Web App của CHECK-IN SCANNER BACKEND
 const API_URL =
   "https://script.google.com/macros/s/AKfycbx1LEKvLneIrVQxkM15O8nicV9LxDow8QB0a2ZHad1Nz2nfYyraEOKzqluzKTDlRJoAFQ/exec";
 
@@ -208,131 +164,363 @@ let processing = false;
 // START SCANNER
 // ============================================================
 
-function startScanner() {
+async function startScanner() {
 
   if (scanning) {
+    return;
+  }
+
+
+  const status =
+    document.getElementById("status");
+
+
+  const button =
+    document.getElementById("startButton");
+
+
+  const debug =
+    document.getElementById("debug");
+
+
+  status.innerText =
+    "Requesting camera permission...";
+
+  status.className =
+    "info";
+
+
+  debug.innerText =
+    "";
+
+
+  button.disabled = true;
+
+
+  // ==========================================================
+  // CHECK HTTPS
+  // ==========================================================
+
+  if (
+    location.protocol !== "https:" &&
+    location.hostname !== "localhost" &&
+    location.hostname !== "127.0.0.1"
+  ) {
+
+    status.innerText =
+      "Camera requires HTTPS.";
+
+    status.className =
+      "error";
+
+
+    debug.innerText =
+      "Open the scanner using your GitHub Pages https:// address.";
+
+
+    button.disabled = false;
 
     return;
 
   }
 
 
-  const status =
-    document.getElementById(
-      "status"
+  // ==========================================================
+  // CHECK CAMERA API
+  // ==========================================================
+
+  if (
+    !navigator.mediaDevices ||
+    !navigator.mediaDevices.getUserMedia
+  ) {
+
+    status.innerText =
+      "Camera is not supported by this browser.";
+
+    status.className =
+      "error";
+
+
+    debug.innerText =
+      "navigator.mediaDevices.getUserMedia is unavailable.";
+
+
+    button.disabled = false;
+
+    return;
+
+  }
+
+
+  // ==========================================================
+  // CREATE SCANNER
+  // ==========================================================
+
+  try {
+
+    scanner =
+      new Html5Qrcode("reader");
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Scanner creation error:",
+      error
     );
 
 
-  const button =
-    document.getElementById(
-      "startButton"
+    status.innerText =
+      "Unable to initialize QR scanner.";
+
+    status.className =
+      "error";
+
+
+    debug.innerText =
+      error.message || String(error);
+
+
+    button.disabled = false;
+
+    return;
+
+  }
+
+
+  // ==========================================================
+  // TRY CAMERA
+  // ==========================================================
+
+  try {
+
+    await startCamera(
+      { facingMode: "environment" }
     );
 
 
-  status.innerText =
-    "Requesting camera permission...";
+    scanning = true;
 
 
-  status.className =
-    "info";
+    status.innerText =
+      "Camera ready. Scan QR code.";
+
+    status.className =
+      "info";
 
 
-  button.disabled =
-    true;
+    debug.innerText =
+      "";
 
 
-  // ==========================================================
-  // CREATE QR SCANNER
-  // ==========================================================
+  }
 
-  scanner =
-    new Html5Qrcode(
-      "reader"
+  catch (firstError) {
+
+    console.warn(
+      "Environment camera failed:",
+      firstError
     );
 
 
-  // ==========================================================
-  // START CAMERA
-  //
-  // Giữ nguyên cách hoạt động của version cũ
-  // ==========================================================
+    // ========================================================
+    // FALLBACK
+    // ========================================================
 
-  scanner
+    try {
 
-    .start(
-
-      {
-        facingMode: {
-          exact: "environment"
-        }
-      },
-
-      {
-
-        fps: 10,
-
-        qrbox: {
-
-          width: 250,
-
-          height: 250
-
-        }
-
-      },
-
-      onScanSuccess,
-
-      onScanFailure
-
-    )
-
-    .then(
-
-      function() {
-
-        scanning = true;
+      await startCamera(
+        { facingMode: "user" }
+      );
 
 
-        status.innerText =
-          "Camera ready. Scan QR code.";
+      scanning = true;
 
 
-        status.className =
-          "info";
+      status.innerText =
+        "Camera ready. Scan QR code.";
 
-      }
+      status.className =
+        "info";
 
-    )
 
-    .catch(
+      debug.innerText =
+        "Using fallback camera.";
 
-      function(error) {
 
-        console.error(
-          "Camera error:",
-          error
+    }
+
+    catch (secondError) {
+
+      console.error(
+        "Camera start failed:",
+        secondError
+      );
+
+
+      scanning = false;
+
+
+      button.disabled = false;
+
+
+      status.innerText =
+        "Unable to access camera.";
+
+      status.className =
+        "error";
+
+
+      debug.innerText =
+        getCameraErrorMessage(
+          secondError
         );
 
 
-        button.disabled =
-          false;
+      // ======================================================
+      // CLEANUP
+      // ======================================================
 
+      try {
 
-        scanning = false;
+        if (scanner) {
 
+          await scanner.clear();
 
-        status.innerText =
-          "Unable to access camera. " +
-          "Please allow camera permission.";
-
-
-        status.className =
-          "error";
+        }
 
       }
 
+      catch (cleanupError) {
+
+        console.warn(
+          "Scanner cleanup error:",
+          cleanupError
+        );
+
+      }
+
+    }
+
+  }
+
+}
+
+
+// ============================================================
+// START CAMERA HELPER
+// ============================================================
+
+function startCamera(
+  cameraConfig
+) {
+
+  return scanner.start(
+
+    cameraConfig,
+
+    {
+
+      fps: 10,
+
+      qrbox: {
+        width: 250,
+        height: 250
+      }
+
+    },
+
+    onScanSuccess,
+
+    onScanFailure
+
+  );
+
+}
+
+
+// ============================================================
+// CAMERA ERROR MESSAGE
+// ============================================================
+
+function getCameraErrorMessage(
+  error
+) {
+
+  if (!error) {
+
+    return "Unknown camera error.";
+
+  }
+
+
+  const message =
+    String(
+      error.message ||
+      error
     );
+
+
+  console.error(
+    "Camera error:",
+    message
+  );
+
+
+  if (
+    message.toLowerCase()
+      .includes("notallowed")
+  ) {
+
+    return (
+      "Camera permission was denied. " +
+      "Please check browser camera permissions."
+    );
+
+  }
+
+
+  if (
+    message.toLowerCase()
+      .includes("notfound")
+  ) {
+
+    return (
+      "No camera was found on this device."
+    );
+
+  }
+
+
+  if (
+    message.toLowerCase()
+      .includes("notreadable")
+  ) {
+
+    return (
+      "Camera is being used by another application."
+    );
+
+  }
+
+
+  if (
+    message.toLowerCase()
+      .includes("security")
+  ) {
+
+    return (
+      "Camera requires a secure HTTPS connection."
+    );
+
+  }
+
+
+  return (
+    "Camera error: " +
+    message
+  );
 
 }
 
@@ -345,10 +533,6 @@ function onScanSuccess(
   decodedText,
   decodedResult
 ) {
-
-  // ----------------------------------------------------------
-  // Không xử lý nhiều lần cùng lúc
-  // ----------------------------------------------------------
 
   if (processing) {
 
@@ -366,10 +550,6 @@ function onScanSuccess(
   );
 
 
-  // ----------------------------------------------------------
-  // LẤY QR ID
-  // ----------------------------------------------------------
-
   const qrId =
     extractQrId(
       decodedText
@@ -384,7 +564,6 @@ function onScanSuccess(
 
 
     processing = false;
-
 
     return;
 
@@ -402,10 +581,6 @@ function onScanSuccess(
   );
 
 
-  // ----------------------------------------------------------
-  // GỌI CHECK-IN API
-  // ----------------------------------------------------------
-
   checkIn(
     qrId
   );
@@ -421,9 +596,7 @@ function extractQrId(
   qrContent
 ) {
 
-  if (
-    !qrContent
-  ) {
+  if (!qrContent) {
 
     return null;
 
@@ -437,7 +610,7 @@ function extractQrId(
 
 
   // ==========================================================
-  // QR CHỨA URL
+  // QR IS URL
   // ==========================================================
 
   try {
@@ -475,8 +648,6 @@ function extractQrId(
 
   // ==========================================================
   // FALLBACK
-  //
-  // Nếu QR chứa trực tiếp QR ID
   // ==========================================================
 
   if (
@@ -503,17 +674,11 @@ function extractQrId(
 // Google Apps Script
 //       ↓
 // Google Sheet
-//
-// Không sử dụng google.script.run
 // ============================================================
 
 function checkIn(
   qrId
 ) {
-
-  // ==========================================================
-  // UNIQUE CALLBACK NAME
-  // ==========================================================
 
   const callbackName =
     "checkInCallback_" +
@@ -560,16 +725,11 @@ function checkIn(
         );
 
 
-        processing =
-          false;
+        processing = false;
 
       }
 
       finally {
-
-        // ----------------------------------------------------
-        // XÓA CALLBACK
-        // ----------------------------------------------------
 
         delete window[
           callbackName
@@ -589,10 +749,6 @@ function checkIn(
       "script"
     );
 
-
-  // ==========================================================
-  // API URL
-  // ==========================================================
 
   script.src =
     API_URL +
@@ -614,7 +770,7 @@ function checkIn(
 
 
   // ==========================================================
-  // REQUEST ERROR
+  // ERROR
   // ==========================================================
 
   script.onerror =
@@ -630,8 +786,7 @@ function checkIn(
       );
 
 
-      processing =
-        false;
+      processing = false;
 
 
       delete window[
@@ -653,7 +808,7 @@ function checkIn(
 
 
   // ==========================================================
-  // SCRIPT LOADED
+  // LOADED
   // ==========================================================
 
   script.onload =
@@ -663,10 +818,6 @@ function checkIn(
         "Apps Script request loaded."
       );
 
-
-      // ------------------------------------------------------
-      // Xóa script sau khi callback chạy
-      // ------------------------------------------------------
 
       setTimeout(
 
@@ -810,8 +961,7 @@ function handleCheckInResult(
 
     function() {
 
-      processing =
-        false;
+      processing = false;
 
 
       showInfo(
@@ -835,10 +985,7 @@ function onScanFailure(
   error
 ) {
 
-  // ----------------------------------------------------------
-  // Ignore normal scanning failures.
-  // QR scanner gọi function này liên tục khi chưa thấy QR.
-  // ----------------------------------------------------------
+  // Normal scanning failures are ignored.
 
 }
 
