@@ -146,6 +146,82 @@ h1 {
 }
 
 
+/* ============================================================
+   PASSWORD WRAPPER
+   ============================================================ */
+
+.password-wrapper {
+
+  position: relative;
+
+  width: 100%;
+
+}
+
+
+.password-wrapper input {
+
+  width: 100%;
+
+  padding-right: 50px;
+
+}
+
+
+/* ============================================================
+   SHOW / HIDE PASSWORD BUTTON
+   ============================================================ */
+
+.password-toggle {
+
+  position: absolute;
+
+  right: 10px;
+
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  width: 35px;
+
+  height: 35px;
+
+  padding: 0;
+
+  border: none;
+
+  background: transparent;
+
+  cursor: pointer;
+
+  font-size: 18px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  color: #555;
+
+}
+
+
+.password-toggle:hover {
+
+  color: #000;
+
+  background: #f5f5f5;
+
+  border-radius: 8px;
+
+}
+
+
+/* ============================================================
+   LOGIN BUTTON
+   ============================================================ */
+
 .login-button {
 
   width: 100%;
@@ -353,6 +429,10 @@ h1 {
   </p>
 
 
+  <!-- ========================================================
+       USERNAME
+       ======================================================== -->
+
   <div class="form-group">
 
     <label for="username">
@@ -370,6 +450,10 @@ h1 {
   </div>
 
 
+  <!-- ========================================================
+       PASSWORD
+       ======================================================== -->
+
   <div class="form-group">
 
     <label for="password">
@@ -377,15 +461,37 @@ h1 {
     </label>
 
 
-    <input
-      type="password"
-      id="password"
-      autocomplete="current-password"
-      placeholder="Enter password"
-    >
+    <div class="password-wrapper">
+
+      <input
+        type="password"
+        id="password"
+        autocomplete="current-password"
+        placeholder="Enter password"
+      >
+
+
+      <button
+        type="button"
+        id="passwordToggle"
+        class="password-toggle"
+        onclick="togglePassword()"
+        aria-label="Show password"
+        title="Show password"
+      >
+
+        👁
+
+      </button>
+
+    </div>
 
   </div>
 
+
+  <!-- ========================================================
+       LOGIN BUTTON
+       ======================================================== -->
 
   <button
     class="login-button"
@@ -501,6 +607,84 @@ let sessionToken = null;
 
 
 // ============================================================
+// SHOW / HIDE PASSWORD
+// ============================================================
+
+function togglePassword() {
+
+  const passwordInput =
+    document.getElementById(
+      "password"
+    );
+
+
+  const toggleButton =
+    document.getElementById(
+      "passwordToggle"
+    );
+
+
+  // ==========================================================
+  // PASSWORD -> TEXT
+  // ==========================================================
+
+  if (
+    passwordInput.type === "password"
+  ) {
+
+    passwordInput.type =
+      "text";
+
+
+    toggleButton.innerText =
+      "🙈";
+
+
+    toggleButton.setAttribute(
+      "aria-label",
+      "Hide password"
+    );
+
+
+    toggleButton.setAttribute(
+      "title",
+      "Hide password"
+    );
+
+  }
+
+
+  // ==========================================================
+  // TEXT -> PASSWORD
+  // ==========================================================
+
+  else {
+
+    passwordInput.type =
+      "password";
+
+
+    toggleButton.innerText =
+      "👁";
+
+
+    toggleButton.setAttribute(
+      "aria-label",
+      "Show password"
+    );
+
+
+    toggleButton.setAttribute(
+      "title",
+      "Show password"
+    );
+
+  }
+
+}
+
+
+// ============================================================
 // LOGIN
 // ============================================================
 
@@ -550,7 +734,8 @@ function login() {
   }
 
 
-  button.disabled = true;
+  button.disabled =
+    true;
 
 
   status.innerText =
@@ -606,7 +791,44 @@ function login() {
 
           document.getElementById(
             "password"
-          ).value = "";
+          ).value =
+            "";
+
+
+          // ==================================================
+          // RESET PASSWORD VISIBILITY
+          // ==================================================
+
+          const passwordInput =
+            document.getElementById(
+              "password"
+            );
+
+
+          const passwordToggle =
+            document.getElementById(
+              "passwordToggle"
+            );
+
+
+          passwordInput.type =
+            "password";
+
+
+          passwordToggle.innerText =
+            "👁";
+
+
+          passwordToggle.setAttribute(
+            "aria-label",
+            "Show password"
+          );
+
+
+          passwordToggle.setAttribute(
+            "title",
+            "Show password"
+          );
 
 
           // ==================================================
@@ -614,7 +836,6 @@ function login() {
           // ==================================================
 
           showScanner();
-
 
         }
 
@@ -699,6 +920,16 @@ function login() {
     );
 
 
+  console.log(
+    "LOGIN API REQUEST:",
+    script.src
+  );
+
+
+  // ==========================================================
+  // ERROR
+  // ==========================================================
+
   script.onerror =
     function() {
 
@@ -736,6 +967,10 @@ function login() {
     };
 
 
+  // ==========================================================
+  // LOADED
+  // ==========================================================
+
   script.onload =
     function() {
 
@@ -761,6 +996,10 @@ function login() {
 
     };
 
+
+  // ==========================================================
+  // SEND REQUEST
+  // ==========================================================
 
   document.body.appendChild(
     script
@@ -791,6 +1030,12 @@ function showScanner() {
     "status"
   ).innerText =
     "Login successful. Start camera.";
+
+
+  document.getElementById(
+    "status"
+  ).className =
+    "info";
 
 }
 
@@ -823,6 +1068,42 @@ function showLogin() {
     "password"
   ).value =
     "";
+
+
+  // ==========================================================
+  // RESET PASSWORD VISIBILITY
+  // ==========================================================
+
+  const passwordInput =
+    document.getElementById(
+      "password"
+    );
+
+
+  const passwordToggle =
+    document.getElementById(
+      "passwordToggle"
+    );
+
+
+  passwordInput.type =
+    "password";
+
+
+  passwordToggle.innerText =
+    "👁";
+
+
+  passwordToggle.setAttribute(
+    "aria-label",
+    "Show password"
+  );
+
+
+  passwordToggle.setAttribute(
+    "title",
+    "Show password"
+  );
 
 
   document.getElementById(
@@ -941,12 +1222,6 @@ async function logout() {
 
 // ============================================================
 // RESTORE SESSION
-// ============================================================
-//
-// Nếu refresh trang trong thời gian session còn hiệu lực,
-// token vẫn còn trong sessionStorage.
-//
-// Backend vẫn là nơi quyết định token có hợp lệ hay không.
 // ============================================================
 
 function restoreSession() {
