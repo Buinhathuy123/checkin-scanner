@@ -10,7 +10,7 @@
   content="width=device-width, initial-scale=1"
 >
 
-<title>Check-in Scanner</title>
+<title>Savills Check-in Scanner</title>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 
@@ -20,77 +20,309 @@
   box-sizing: border-box;
 }
 
+
 body {
+
   margin: 0;
+
   padding: 20px;
-  font-family: Arial, sans-serif;
+
+  font-family:
+    Arial,
+    sans-serif;
+
   background: #f5f5f5;
+
   text-align: center;
+
 }
 
+
 .container {
+
   max-width: 500px;
+
   margin: auto;
+
   background: white;
+
   padding: 25px;
+
   border-radius: 20px;
+
   box-shadow:
     0 5px 25px
     rgba(0,0,0,0.1);
+
 }
+
+
+/* ============================================================
+   LOGIN
+   ============================================================ */
+
+#loginSection {
+
+  display: block;
+
+}
+
+
+#scannerSection {
+
+  display: none;
+
+}
+
+
+.login-logo {
+
+  max-width: 180px;
+
+  max-height: 80px;
+
+  margin-bottom: 15px;
+
+}
+
 
 h1 {
+
   margin-top: 0;
+
 }
+
+
+.login-title {
+
+  margin-bottom: 25px;
+
+}
+
+
+.form-group {
+
+  text-align: left;
+
+  margin-bottom: 18px;
+
+}
+
+
+.form-group label {
+
+  display: block;
+
+  margin-bottom: 7px;
+
+  font-weight: bold;
+
+  font-size: 14px;
+
+}
+
+
+.form-group input {
+
+  width: 100%;
+
+  padding: 13px;
+
+  border: 1px solid #ccc;
+
+  border-radius: 10px;
+
+  font-size: 16px;
+
+  outline: none;
+
+}
+
+
+.form-group input:focus {
+
+  border-color: #777;
+
+}
+
+
+.login-button {
+
+  width: 100%;
+
+  padding: 14px;
+
+  border: none;
+
+  border-radius: 10px;
+
+  background: #FFD700;
+
+  font-size: 16px;
+
+  font-weight: bold;
+
+  cursor: pointer;
+
+}
+
+
+.login-button:disabled {
+
+  opacity: 0.5;
+
+  cursor: not-allowed;
+
+}
+
+
+.login-status {
+
+  margin-top: 15px;
+
+  font-size: 14px;
+
+  min-height: 20px;
+
+}
+
+
+.login-error {
+
+  color: red;
+
+}
+
+
+.login-success {
+
+  color: green;
+
+}
+
+
+/* ============================================================
+   SCANNER
+   ============================================================ */
+
+.scanner-header {
+
+  position: relative;
+
+}
+
+
+.logout-button {
+
+  position: absolute;
+
+  right: 0;
+
+  top: 0;
+
+  padding: 8px 12px;
+
+  border: none;
+
+  border-radius: 8px;
+
+  background: #eee;
+
+  cursor: pointer;
+
+  font-size: 13px;
+
+}
+
 
 #reader {
+
   width: 100%;
+
   margin-top: 20px;
+
 }
 
-button {
+
+.start-button {
+
   padding: 14px 25px;
+
   border: none;
+
   border-radius: 10px;
+
   background: #FFD700;
+
   font-size: 16px;
+
   font-weight: bold;
+
   cursor: pointer;
+
 }
 
-button:disabled {
+
+.start-button:disabled {
+
   opacity: 0.5;
+
   cursor: not-allowed;
+
 }
+
 
 #status {
+
   margin-top: 20px;
+
   font-size: 17px;
+
   font-weight: bold;
+
   line-height: 1.5;
+
 }
+
 
 .success {
+
   color: green;
+
 }
+
 
 .error {
+
   color: red;
+
 }
+
 
 .info {
+
   color: #555;
+
 }
+
 
 .warning {
+
   color: #d97706;
+
 }
 
+
 .debug {
+
   margin-top: 15px;
+
   font-size: 12px;
+
   color: #777;
+
   word-break: break-word;
+
 }
 
 </style>
@@ -103,39 +335,141 @@ button:disabled {
 
 <div class="container">
 
-<h1>
-Check-in Scanner
-</h1>
 
-<p>
-Scan the customer's QR code
-</p>
+<!-- ==========================================================
+     LOGIN SECTION
+     ========================================================== -->
 
-
-<button
-  id="startButton"
-  onclick="startScanner()">
-
-Start Camera
-
-</button>
+<div id="loginSection">
 
 
-<div id="reader"></div>
+  <h1>
+    Savills
+  </h1>
 
 
-<div
-  id="status"
-  class="info">
+  <p class="login-title">
+    Check-in Scanner
+  </p>
 
-Camera not started.
+
+  <div class="form-group">
+
+    <label for="username">
+      Username
+    </label>
+
+
+    <input
+      type="text"
+      id="username"
+      autocomplete="username"
+      placeholder="Enter username"
+    >
+
+  </div>
+
+
+  <div class="form-group">
+
+    <label for="password">
+      Password
+    </label>
+
+
+    <input
+      type="password"
+      id="password"
+      autocomplete="current-password"
+      placeholder="Enter password"
+    >
+
+  </div>
+
+
+  <button
+    class="login-button"
+    id="loginButton"
+    onclick="login()"
+  >
+
+    Login
+
+  </button>
+
+
+  <div
+    id="loginStatus"
+    class="login-status"
+  ></div>
+
 
 </div>
 
 
-<div
-  id="debug"
-  class="debug">
+<!-- ==========================================================
+     SCANNER SECTION
+     ========================================================== -->
+
+<div id="scannerSection">
+
+
+  <div class="scanner-header">
+
+    <button
+      class="logout-button"
+      onclick="logout()"
+    >
+
+      Logout
+
+    </button>
+
+
+    <h1>
+      Check-in Scanner
+    </h1>
+
+  </div>
+
+
+  <p>
+    Scan the customer's QR code
+  </p>
+
+
+  <button
+    id="startButton"
+    class="start-button"
+    onclick="startScanner()"
+  >
+
+    Start Camera
+
+  </button>
+
+
+  <div
+    id="reader"
+  ></div>
+
+
+  <div
+    id="status"
+    class="info"
+  >
+
+    Camera not started.
+
+  </div>
+
+
+  <div
+    id="debug"
+    class="debug"
+  ></div>
+
+
 </div>
 
 
@@ -153,11 +487,492 @@ const API_URL =
   "https://script.google.com/macros/s/AKfycbx1LEKvLneIrVQxkM15O8nicV9LxDow8QB0a2ZHad1Nz2nfYyraEOKzqluzKTDlRJoAFQ/exec";
 
 
+// ============================================================
+// GLOBAL VARIABLES
+// ============================================================
+
 let scanner = null;
 
 let scanning = false;
 
 let processing = false;
+
+let sessionToken = null;
+
+
+// ============================================================
+// LOGIN
+// ============================================================
+
+function login() {
+
+  const username =
+    document.getElementById(
+      "username"
+    ).value.trim();
+
+
+  const password =
+    document.getElementById(
+      "password"
+    ).value;
+
+
+  const button =
+    document.getElementById(
+      "loginButton"
+    );
+
+
+  const status =
+    document.getElementById(
+      "loginStatus"
+    );
+
+
+  // ==========================================================
+  // VALIDATE EMPTY
+  // ==========================================================
+
+  if (
+    !username ||
+    !password
+  ) {
+
+    status.innerText =
+      "Please enter username and password.";
+
+    status.className =
+      "login-status login-error";
+
+    return;
+
+  }
+
+
+  button.disabled = true;
+
+
+  status.innerText =
+    "Signing in...";
+
+  status.className =
+    "login-status";
+
+
+  // ==========================================================
+  // CALLBACK
+  // ==========================================================
+
+  const callbackName =
+    "loginCallback_" +
+    Date.now();
+
+
+  window[callbackName] =
+    function(result) {
+
+      console.log(
+        "LOGIN RESPONSE:",
+        result
+      );
+
+
+      try {
+
+        if (
+          result &&
+          result.success &&
+          result.token
+        ) {
+
+          // ==================================================
+          // SAVE TOKEN
+          // ==================================================
+
+          sessionToken =
+            result.token;
+
+
+          sessionStorage.setItem(
+            "scanner_session_token",
+            sessionToken
+          );
+
+
+          // ==================================================
+          // CLEAR PASSWORD
+          // ==================================================
+
+          document.getElementById(
+            "password"
+          ).value = "";
+
+
+          // ==================================================
+          // SHOW SCANNER
+          // ==================================================
+
+          showScanner();
+
+
+        }
+
+        else {
+
+          status.innerText =
+            (
+              result &&
+              result.message
+            )
+              ? result.message
+              : "Invalid username or password.";
+
+
+          status.className =
+            "login-status login-error";
+
+
+          button.disabled =
+            false;
+
+        }
+
+      }
+
+      catch (error) {
+
+        console.error(
+          "Login handling error:",
+          error
+        );
+
+
+        status.innerText =
+          "Unable to process login response.";
+
+        status.className =
+          "login-status login-error";
+
+
+        button.disabled =
+          false;
+
+      }
+
+
+      finally {
+
+        delete window[
+          callbackName
+        ];
+
+      }
+
+    };
+
+
+  // ==========================================================
+  // CREATE SCRIPT
+  // ==========================================================
+
+  const script =
+    document.createElement(
+      "script"
+    );
+
+
+  script.src =
+    API_URL +
+    "?action=login" +
+    "&username=" +
+    encodeURIComponent(
+      username
+    ) +
+    "&password=" +
+    encodeURIComponent(
+      password
+    ) +
+    "&callback=" +
+    encodeURIComponent(
+      callbackName
+    );
+
+
+  script.onerror =
+    function() {
+
+      console.error(
+        "Login API request failed."
+      );
+
+
+      status.innerText =
+        "Unable to connect to authentication server.";
+
+      status.className =
+        "login-status login-error";
+
+
+      button.disabled =
+        false;
+
+
+      delete window[
+        callbackName
+      ];
+
+
+      if (
+        script.parentNode
+      ) {
+
+        script.parentNode.removeChild(
+          script
+        );
+
+      }
+
+    };
+
+
+  script.onload =
+    function() {
+
+      setTimeout(
+
+        function() {
+
+          if (
+            script.parentNode
+          ) {
+
+            script.parentNode.removeChild(
+              script
+            );
+
+          }
+
+        },
+
+        500
+
+      );
+
+    };
+
+
+  document.body.appendChild(
+    script
+  );
+
+}
+
+
+// ============================================================
+// SHOW SCANNER
+// ============================================================
+
+function showScanner() {
+
+  document.getElementById(
+    "loginSection"
+  ).style.display =
+    "none";
+
+
+  document.getElementById(
+    "scannerSection"
+  ).style.display =
+    "block";
+
+
+  document.getElementById(
+    "status"
+  ).innerText =
+    "Login successful. Start camera.";
+
+}
+
+
+// ============================================================
+// SHOW LOGIN
+// ============================================================
+
+function showLogin() {
+
+  document.getElementById(
+    "loginSection"
+  ).style.display =
+    "block";
+
+
+  document.getElementById(
+    "scannerSection"
+  ).style.display =
+    "none";
+
+
+  document.getElementById(
+    "username"
+  ).value =
+    "";
+
+
+  document.getElementById(
+    "password"
+  ).value =
+    "";
+
+
+  document.getElementById(
+    "loginStatus"
+  ).innerText =
+    "";
+
+
+  document.getElementById(
+    "loginButton"
+  ).disabled =
+    false;
+
+}
+
+
+// ============================================================
+// LOGOUT
+// ============================================================
+
+async function logout() {
+
+  // ==========================================================
+  // STOP CAMERA
+  // ==========================================================
+
+  await stopScanner();
+
+
+  // ==========================================================
+  // REMOVE SERVER SESSION
+  // ==========================================================
+
+  if (
+    sessionToken
+  ) {
+
+    const tokenToLogout =
+      sessionToken;
+
+
+    const callbackName =
+      "logoutCallback_" +
+      Date.now();
+
+
+    window[callbackName] =
+      function(result) {
+
+        console.log(
+          "Logout response:",
+          result
+        );
+
+
+        delete window[
+          callbackName
+        ];
+
+      };
+
+
+    const script =
+      document.createElement(
+        "script"
+      );
+
+
+    script.src =
+      API_URL +
+      "?action=logout" +
+      "&token=" +
+      encodeURIComponent(
+        tokenToLogout
+      ) +
+      "&callback=" +
+      encodeURIComponent(
+        callbackName
+      );
+
+
+    script.onerror =
+      function() {
+
+        delete window[
+          callbackName
+        ];
+
+      };
+
+
+    document.body.appendChild(
+      script
+    );
+
+  }
+
+
+  // ==========================================================
+  // CLEAR LOCAL SESSION
+  // ==========================================================
+
+  sessionToken =
+    null;
+
+
+  sessionStorage.removeItem(
+    "scanner_session_token"
+  );
+
+
+  showLogin();
+
+}
+
+
+// ============================================================
+// RESTORE SESSION
+// ============================================================
+//
+// Nếu refresh trang trong thời gian session còn hiệu lực,
+// token vẫn còn trong sessionStorage.
+//
+// Backend vẫn là nơi quyết định token có hợp lệ hay không.
+// ============================================================
+
+function restoreSession() {
+
+  const savedToken =
+    sessionStorage.getItem(
+      "scanner_session_token"
+    );
+
+
+  if (
+    !savedToken
+  ) {
+
+    return;
+
+  }
+
+
+  sessionToken =
+    savedToken;
+
+
+  showScanner();
+
+}
 
 
 // ============================================================
@@ -166,25 +981,51 @@ let processing = false;
 
 async function startScanner() {
 
-  if (scanning) {
+  // ==========================================================
+  // REQUIRE LOGIN
+  // ==========================================================
+
+  if (
+    !sessionToken
+  ) {
+
+    showLogin();
+
     return;
+
+  }
+
+
+  if (
+    scanning
+  ) {
+
+    return;
+
   }
 
 
   const status =
-    document.getElementById("status");
+    document.getElementById(
+      "status"
+    );
 
 
   const button =
-    document.getElementById("startButton");
+    document.getElementById(
+      "startButton"
+    );
 
 
   const debug =
-    document.getElementById("debug");
+    document.getElementById(
+      "debug"
+    );
 
 
   status.innerText =
     "Requesting camera permission...";
+
 
   status.className =
     "info";
@@ -194,7 +1035,8 @@ async function startScanner() {
     "";
 
 
-  button.disabled = true;
+  button.disabled =
+    true;
 
 
   // ==========================================================
@@ -218,7 +1060,9 @@ async function startScanner() {
       "Open the scanner using your GitHub Pages https:// address.";
 
 
-    button.disabled = false;
+    button.disabled =
+      false;
+
 
     return;
 
@@ -245,7 +1089,9 @@ async function startScanner() {
       "navigator.mediaDevices.getUserMedia is unavailable.";
 
 
-    button.disabled = false;
+    button.disabled =
+      false;
+
 
     return;
 
@@ -259,7 +1105,9 @@ async function startScanner() {
   try {
 
     scanner =
-      new Html5Qrcode("reader");
+      new Html5Qrcode(
+        "reader"
+      );
 
   }
 
@@ -279,10 +1127,13 @@ async function startScanner() {
 
 
     debug.innerText =
-      error.message || String(error);
+      error.message ||
+      String(error);
 
 
-    button.disabled = false;
+    button.disabled =
+      false;
+
 
     return;
 
@@ -296,11 +1147,15 @@ async function startScanner() {
   try {
 
     await startCamera(
-      { facingMode: "environment" }
+      {
+        facingMode:
+          "environment"
+      }
     );
 
 
-    scanning = true;
+    scanning =
+      true;
 
 
     status.innerText =
@@ -331,11 +1186,15 @@ async function startScanner() {
     try {
 
       await startCamera(
-        { facingMode: "user" }
+        {
+          facingMode:
+            "user"
+        }
       );
 
 
-      scanning = true;
+      scanning =
+        true;
 
 
       status.innerText =
@@ -359,10 +1218,12 @@ async function startScanner() {
       );
 
 
-      scanning = false;
+      scanning =
+        false;
 
 
-      button.disabled = false;
+      button.disabled =
+        false;
 
 
       status.innerText =
@@ -378,13 +1239,11 @@ async function startScanner() {
         );
 
 
-      // ======================================================
-      // CLEANUP
-      // ======================================================
-
       try {
 
-        if (scanner) {
+        if (
+          scanner
+        ) {
 
           await scanner.clear();
 
@@ -425,8 +1284,11 @@ function startCamera(
       fps: 10,
 
       qrbox: {
+
         width: 250,
+
         height: 250
+
       }
 
     },
@@ -441,6 +1303,96 @@ function startCamera(
 
 
 // ============================================================
+// STOP SCANNER
+// ============================================================
+
+async function stopScanner() {
+
+  scanning =
+    false;
+
+
+  processing =
+    false;
+
+
+  if (
+    scanner
+  ) {
+
+    try {
+
+      await scanner.stop();
+
+    }
+
+    catch (error) {
+
+      console.warn(
+        "Scanner stop error:",
+        error
+      );
+
+    }
+
+
+    try {
+
+      await scanner.clear();
+
+    }
+
+    catch (error) {
+
+      console.warn(
+        "Scanner clear error:",
+        error
+      );
+
+    }
+
+
+    scanner =
+      null;
+
+  }
+
+
+  const reader =
+    document.getElementById(
+      "reader"
+    );
+
+
+  if (
+    reader
+  ) {
+
+    reader.innerHTML =
+      "";
+
+  }
+
+
+  const button =
+    document.getElementById(
+      "startButton"
+    );
+
+
+  if (
+    button
+  ) {
+
+    button.disabled =
+      false;
+
+  }
+
+}
+
+
+// ============================================================
 // CAMERA ERROR MESSAGE
 // ============================================================
 
@@ -448,7 +1400,9 @@ function getCameraErrorMessage(
   error
 ) {
 
-  if (!error) {
+  if (
+    !error
+  ) {
 
     return "Unknown camera error.";
 
@@ -469,8 +1423,11 @@ function getCameraErrorMessage(
 
 
   if (
-    message.toLowerCase()
-      .includes("notallowed")
+    message
+      .toLowerCase()
+      .includes(
+        "notallowed"
+      )
   ) {
 
     return (
@@ -482,8 +1439,11 @@ function getCameraErrorMessage(
 
 
   if (
-    message.toLowerCase()
-      .includes("notfound")
+    message
+      .toLowerCase()
+      .includes(
+        "notfound"
+      )
   ) {
 
     return (
@@ -494,8 +1454,11 @@ function getCameraErrorMessage(
 
 
   if (
-    message.toLowerCase()
-      .includes("notreadable")
+    message
+      .toLowerCase()
+      .includes(
+        "notreadable"
+      )
   ) {
 
     return (
@@ -506,8 +1469,11 @@ function getCameraErrorMessage(
 
 
   if (
-    message.toLowerCase()
-      .includes("security")
+    message
+      .toLowerCase()
+      .includes(
+        "security"
+      )
   ) {
 
     return (
@@ -534,14 +1500,38 @@ function onScanSuccess(
   decodedResult
 ) {
 
-  if (processing) {
+  if (
+    processing
+  ) {
 
     return;
 
   }
 
 
-  processing = true;
+  // ==========================================================
+  // REQUIRE AUTHENTICATION
+  // ==========================================================
+
+  if (
+    !sessionToken
+  ) {
+
+    showError(
+      "Session expired. Please login again."
+    );
+
+
+    showLogin();
+
+
+    return;
+
+  }
+
+
+  processing =
+    true;
 
 
   console.log(
@@ -556,14 +1546,18 @@ function onScanSuccess(
     );
 
 
-  if (!qrId) {
+  if (
+    !qrId
+  ) {
 
     showError(
       "Invalid QR code."
     );
 
 
-    processing = false;
+    processing =
+      false;
+
 
     return;
 
@@ -596,7 +1590,9 @@ function extractQrId(
   qrContent
 ) {
 
-  if (!qrContent) {
+  if (
+    !qrContent
+  ) {
 
     return null;
 
@@ -627,7 +1623,9 @@ function extractQrId(
       );
 
 
-    if (id) {
+    if (
+      id
+    ) {
 
       return String(
         id
@@ -666,19 +1664,36 @@ function extractQrId(
 
 // ============================================================
 // CHECK-IN API
-//
-// GitHub Pages
-//       ↓
-// JSONP
-//       ↓
-// Google Apps Script
-//       ↓
-// Google Sheet
 // ============================================================
 
 function checkIn(
   qrId
 ) {
+
+  // ==========================================================
+  // REQUIRE TOKEN
+  // ==========================================================
+
+  if (
+    !sessionToken
+  ) {
+
+    showError(
+      "Session expired. Please login again."
+    );
+
+
+    processing =
+      false;
+
+
+    showLogin();
+
+
+    return;
+
+  }
+
 
   const callbackName =
     "checkInCallback_" +
@@ -706,6 +1721,40 @@ function checkIn(
 
       try {
 
+        // ====================================================
+        // SESSION EXPIRED
+        // ====================================================
+
+        if (
+          result &&
+          result.authenticated === false
+        ) {
+
+          showError(
+            "Session expired. Please login again."
+          );
+
+
+          sessionToken =
+            null;
+
+
+          sessionStorage.removeItem(
+            "scanner_session_token"
+          );
+
+
+          stopScanner();
+
+
+          showLogin();
+
+
+          return;
+
+        }
+
+
         handleCheckInResult(
           result
         );
@@ -725,7 +1774,8 @@ function checkIn(
         );
 
 
-        processing = false;
+        processing =
+          false;
 
       }
 
@@ -757,6 +1807,10 @@ function checkIn(
     encodeURIComponent(
       qrId
     ) +
+    "&token=" +
+    encodeURIComponent(
+      sessionToken
+    ) +
     "&callback=" +
     encodeURIComponent(
       callbackName
@@ -786,7 +1840,8 @@ function checkIn(
       );
 
 
-      processing = false;
+      processing =
+        false;
 
 
       delete window[
@@ -961,12 +2016,19 @@ function handleCheckInResult(
 
     function() {
 
-      processing = false;
+      processing =
+        false;
 
 
-      showInfo(
-        "Ready for next QR code."
-      );
+      if (
+        sessionToken
+      ) {
+
+        showInfo(
+          "Ready for next QR code."
+        );
+
+      }
 
     },
 
@@ -1124,6 +2186,20 @@ function escapeHtml(
     );
 
 }
+
+
+// ============================================================
+// PAGE LOAD
+// ============================================================
+
+document.addEventListener(
+  "DOMContentLoaded",
+  function() {
+
+    restoreSession();
+
+  }
+);
 
 </script>
 
